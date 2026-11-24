@@ -1,1 +1,612 @@
-1
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Neon Memory — Options & Rewards</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0a0a1a; --card:#1a1a3a; --cyan:#00f3ff; --pink:#ff00aa;
+  --text:#e0e0ff; --gold:#ffd700; --green:#00ff88;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:'Orbitron',sans-serif;background:var(--bg);
+  background-image:
+    radial-gradient(circle at 15% 20%, rgba(0,243,255,.12), transparent 45%),
+    radial-gradient(circle at 85% 80%, rgba(255,0,170,.12), transparent 45%);
+  color:var(--text);min-height:100vh;display:flex;flex-direction:column;
+  align-items:center;padding:16px;overflow-x:hidden;
+}
+h1{
+  font-size:clamp(1.6rem,5vw,2.4rem);font-weight:900;letter-spacing:3px;
+  text-transform:uppercase;margin-bottom:6px;
+  background:linear-gradient(90deg,var(--cyan),var(--pink));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  text-shadow:0 0 20px rgba(0,243,255,.4);text-align:center;
+}
+.subtitle{font-size:.75rem;letter-spacing:2px;color:#8888bb;margin-bottom:14px;text-align:center}
+
+/* Панель опций */
+.panel{
+  width:100%;max-width:760px;background:rgba(26,26,58,.6);
+  border:1px solid rgba(0,243,255,.25);border-radius:16px;
+  padding:14px 16px;margin-bottom:14px;display:flex;flex-wrap:wrap;
+  gap:12px;align-items:center;justify-content:center;
+  backdrop-filter:blur(6px);
+}
+.panel label{font-size:.7rem;letter-spacing:1px;color:#aaaadd;display:flex;flex-direction:column;gap:4px}
+.panel select,.panel input[type="text"]{
+  font-family:'Orbitron',sans-serif;font-size:.8rem;padding:8px 10px;
+  background:#0d0d22;color:var(--text);border:1px solid rgba(0,243,255,.35);
+  border-radius:8px;outline:none;
+}
+.panel select:focus,.panel input:focus{border-color:var(--cyan);box-shadow:0 0 10px rgba(0,243,255,.3)}
+.toggle{display:flex;align-items:center;gap:8px;font-size:.7rem;letter-spacing:1px;color:#aaaadd;cursor:pointer}
+.toggle input{display:none}
+.switch{width:40px;height:22px;background:#22224a;border-radius:20px;position:relative;transition:.25s}
+.switch::after{content:"";position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:#6666aa;transition:.25s}
+.toggle input:checked + .switch{background:rgba(0,243,255,.3)}
+.toggle input:checked + .switch::after{left:21px;background:var(--cyan);box-shadow:0 0 10px var(--cyan)}
+
+/* Статистика */
+.stats{
+  display:flex;flex-wrap:wrap;gap:18px;justify-content:center;
+  margin-bottom:14px;font-size:.85rem;font-weight:700;color:var(--cyan);
+  text-shadow:0 0 10px rgba(0,243,255,.4);
+}
+.stats span b{color:var(--pink);text-shadow:0 0 10px rgba(255,0,170,.5)}
+
+/* Доска */
+.board{
+  display:grid;gap:10px;perspective:1200px;width:100%;max-width:720px;
+  margin:0 auto 16px;justify-content:center;
+}
+.card{
+  aspect-ratio:1/1;cursor:pointer;position:relative;transform-style:preserve-3d;
+  transition:transform .45s cubic-bezier(.175,.885,.32,1.275);border-radius:12px;
+}
+.card.flipped{transform:rotateY(180deg)}
+.card.matched{animation:pulse .45s ease-in-out;pointer-events:none}
+.card.matched .face{box-shadow:0 0 26px var(--cyan),inset 0 0 18px var(--cyan);border-color:var(--cyan)}
+.card.matched .face.front{background:linear-gradient(135deg,#113355,#1a4477)}
+@keyframes pulse{0%{transform:rotateY(180deg) scale(1)}50%{transform:rotateY(180deg) scale(1.08)}100%{transform:rotateY(180deg) scale(1)}}
+.face{
+  position:absolute;inset:0;backface-visibility:hidden;border-radius:12px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:clamp(1.2rem,4vw,2.2rem);border:2px solid var(--pink);
+  box-shadow:0 0 12px rgba(255,0,170,.25);background:var(--card);
+  transition:box-shadow .3s,border-color .3s;
+}
+.face.front{transform:rotateY(180deg)}
+.face.back{background:linear-gradient(135deg,#0a0a1a,#1a1a3a);color:var(--pink);font-size:1.3rem}
+.face.back::after{content:"?"}
+
+/* Кнопки */
+.actions{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-bottom:14px}
+.btn{
+  padding:10px 22px;font-family:'Orbitron',sans-serif;font-size:.75rem;font-weight:700;
+  letter-spacing:1.5px;text-transform:uppercase;color:var(--bg);border:none;border-radius:40px;
+  cursor:pointer;transition:transform .2s,box-shadow .2s;
+  background:linear-gradient(90deg,var(--cyan),var(--pink));
+  box-shadow:0 0 18px rgba(0,243,255,.35);
+}
+.btn:hover{transform:scale(1.05);box-shadow:0 0 26px rgba(0,243,255,.6)}
+.btn:active{transform:scale(.96)}
+.btn.ghost{background:transparent;color:var(--cyan);border:1px solid rgba(0,243,255,.5);box-shadow:none}
+.btn.ghost:hover{background:rgba(0,243,255,.08)}
+
+/* Сообщение */
+.message{
+  font-size:1.1rem;font-weight:700;color:var(--pink);
+  text-shadow:0 0 12px var(--pink);min-height:1.6rem;text-align:center;
+  margin-bottom:10px;
+}
+
+/* Достижения */
+.ach-wrap{width:100%;max-width:760px;margin-top:6px}
+.ach-title{font-size:.8rem;letter-spacing:2px;color:#aaaadd;margin-bottom:8px;text-align:center;text-transform:uppercase}
+.ach-list{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.ach{
+  font-size:.65rem;letter-spacing:1px;padding:6px 12px;border-radius:30px;
+  border:1px solid #333366;color:#6666aa;background:rgba(26,26,58,.5);
+  transition:.3s;
+}
+.ach.unlocked{
+  color:var(--gold);border-color:var(--gold);
+  box-shadow:0 0 12px rgba(255,215,0,.4);
+  background:rgba(255,215,0,.07);
+}
+
+/* Таблица лидеров */
+.leaderboard{width:100%;max-width:760px;margin-top:14px}
+.lb-title{font-size:.8rem;letter-spacing:2px;color:#aaaadd;margin-bottom:8px;text-align:center;text-transform:uppercase}
+.lb-list{list-style:none;font-size:.75rem}
+.lb-list li{
+  display:flex;justify-content:space-between;padding:6px 12px;
+  border-bottom:1px solid rgba(0,243,255,.1);color:#ccccee;
+}
+.lb-list li:first-child{color:var(--gold);text-shadow:0 0 8px rgba(255,215,0,.4)}
+.lb-empty{text-align:center;font-size:.7rem;color:#6666aa;padding:8px}
+
+/* Всплывающие уведомления */
+.toast-container{position:fixed;bottom:20px;right:20px;display:flex;flex-direction:column;gap:8px;z-index:999;pointer-events:none}
+.toast{
+  font-size:.7rem;letter-spacing:1px;padding:10px 16px;border-radius:12px;
+  background:rgba(10,10,26,.95);border:1px solid var(--gold);
+  color:var(--gold);box-shadow:0 0 20px rgba(255,215,0,.4);
+  animation:toastIn .35s ease, toastOut .35s ease 2.65s forwards;
+}
+@keyframes toastIn{from{opacity:0;transform:translateX(40px)}to{opacity:1;transform:translateX(0)}}
+@keyframes toastOut{to{opacity:0;transform:translateX(40px)}}
+
+@media(max-width:500px){
+  .panel{gap:8px;padding:10px}
+  .stats{gap:12px;font-size:.75rem}
+  .board{gap:7px}
+  .btn{padding:8px 16px;font-size:.65rem}
+}
+</style>
+</head>
+<body>
+<h1>Neon Memory</h1>
+<div class="subtitle">OPTIONS • REWARDS • LEADERBOARD</div>
+
+<!-- Панель опций -->
+<div class="panel">
+  <label>Сложность
+    <select id="difficulty">
+      <option value="easy">Лёгкая (4×4)</option>
+      <option value="medium" selected>Средняя (4×5)</option>
+      <option value="hard">Сложная (5×6)</option>
+    </select>
+  </label>
+  <label>Таймер
+    <select id="timerMode">
+      <option value="on" selected>Включён</option>
+      <option value="off">Выключен</option>
+    </select>
+  </label>
+  <label>Имя для лидерборда
+    <input type="text" id="playerName" maxlength="12" placeholder="Игрок" value="Игрок">
+  </label>
+  <label class="toggle">
+    <input type="checkbox" id="soundToggle" checked>
+    <span class="switch"></span> Звук
+  </label>
+</div>
+
+<!-- Статистика -->
+<div class="stats">
+  <span>Ходы: <b id="moves">0</b></span>
+  <span>Пары: <b id="pairs">0</b>/<b id="totalPairs">10</b></span>
+  <span>Очки: <b id="score">0</b></span>
+  <span>Время: <b id="time">0:00</b></span>
+</div>
+
+<!-- Доска -->
+<div class="board" id="board"></div>
+
+<!-- Кнопки -->
+<div class="actions">
+  <button class="btn" id="restart">Новая игра</button>
+  <button class="btn ghost" id="resetBest">Сбросить рекорд</button>
+</div>
+
+<div class="message" id="message"></div>
+
+<!-- Достижения -->
+<div class="ach-wrap">
+  <div class="ach-title">Достижения</div>
+  <div class="ach-list" id="achList"></div>
+</div>
+
+<!-- Таблица лидеров -->
+<div class="leaderboard">
+  <div class="lb-title">Таблица лидеров (топ-10 по очкам)</div>
+  <ul class="lb-list" id="lbList"></ul>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+/* =========================================================
+   === МЕСТО ДЛЯ ВАШЕЙ FIREBASE-КОНФИГУРАЦИИ ===
+   Вставьте сюда объект firebaseConfig из вашей Firebase Console.
+   Пример:
+   const firebaseConfig = {
+     apiKey: "...",
+     authDomain: "...",
+     projectId: "...",
+     storageBucket: "...",
+     messagingSenderId: "...",
+     appId: "..."
+   };
+   Если оставить null — игра работает локально (без сети).
+   ========================================================= */
+const firebaseConfig = null;
+
+/* ================= ИКОНКИ И СЛОЖНОСТЬ ================= */
+const ICON_POOL = ['🚀','👾','💎','⚡','🔥','🌙','⭐','🎮','🛸','🧬','🔮','🎲','👽','🌈','🪐'];
+const DIFFICULTY = {
+  easy:   { cols:4, rows:4, pairs:8,  bonus:200 },
+  medium: { cols:4, rows:5, pairs:10, bonus:400 },
+  hard:   { cols:5, rows:6, pairs:15, bonus:800 }
+};
+
+/* ================= СОСТОЯНИЕ ================= */
+let state = {
+  difficulty: 'medium',
+  timerOn: true,
+  soundOn: true,
+  playerName: 'Игрок',
+  cards: [],
+  flipped: [],
+  matched: 0,
+  moves: 0,
+  score: 0,
+  lock: false,
+  startTime: null,
+  timerInterval: null,
+  elapsed: 0,
+  bestKey: '',
+  gameOver: false
+};
+
+/* ================= DOM ================= */
+const $ = id => document.getElementById(id);
+const boardEl = $('board');
+const movesEl = $('moves');
+const pairsEl = $('pairs');
+const totalPairsEl = $('totalPairs');
+const scoreEl = $('score');
+const timeEl = $('time');
+const messageEl = $('message');
+const achListEl = $('achList');
+const lbListEl = $('lbList');
+const toastContainer = $('toastContainer');
+const difficultySel = $('difficulty');
+const timerModeSel = $('timerMode');
+const playerNameInput = $('playerName');
+const soundToggle = $('soundToggle');
+
+/* ================= ЗВУК (Web Audio) ================= */
+let audioCtx = null;
+function beep(freq=440, dur=0.08, type='sine', vol=0.15){
+  if(!state.soundOn) return;
+  try{
+    if(!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = type; osc.frequency.value = freq;
+    gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + dur);
+    osc.connect(gain); gain.connect(audioCtx.destination);
+    osc.start(); osc.stop(audioCtx.currentTime + dur);
+  }catch(e){}
+}
+
+/* ================= ДОСТИЖЕНИЯ ================= */
+const ACHIEVEMENTS = {
+  first_win:   { title:'Первая победа',      check: s => s.gameOver && s.matched === DIFFICULTY[s.difficulty].pairs },
+  no_mistakes: { title:'Без ошибок',          check: s => s.gameOver && s.moves === DIFFICULTY[s.difficulty].pairs },
+  speedster:   { title:'Скоростной',          check: s => s.gameOver && s.timerOn && s.elapsed > 0 && s.elapsed < 60 },
+  hard_win:    { title:'Покоритель сложного', check: s => s.gameOver && s.difficulty === 'hard' && s.matched === DIFFICULTY.hard.pairs },
+  all_diffs:   { title:'Все сложности',       check: (s, store) => ['easy','medium','hard'].every(d => store.wins[d]) },
+  ten_wins:    { title:'10 побед',            check: (s, store) => Object.values(store.wins).reduce((a,b)=>a+b,0) >= 10 }
+};
+
+function loadStore(){
+  try{
+    return JSON.parse(localStorage.getItem('neonMemoryStore')) || {
+      achievements: {}, wins: { easy:0, medium:0, hard:0 },
+      best: { easy:null, medium:null, hard:null }
+    };
+  }catch(e){
+    return { achievements:{}, wins:{easy:0,medium:0,hard:0}, best:{easy:null,medium:null,hard:null} };
+  }
+}
+function saveStore(store){
+  localStorage.setItem('neonMemoryStore', JSON.stringify(store));
+}
+
+function renderAchievements(){
+  const store = loadStore();
+  achListEl.innerHTML = '';
+  Object.entries(ACHIEVEMENTS).forEach(([key, ach]) => {
+    const div = document.createElement('div');
+    div.className = 'ach' + (store.achievements[key] ? ' unlocked' : '');
+    div.textContent = ach.title;
+    achListEl.appendChild(div);
+  });
+}
+
+function checkAchievements(){
+  const store = loadStore();
+  Object.entries(ACHIEVEMENTS).forEach(([key, ach]) => {
+    if(!store.achievements[key] && ach.check(state, store)){
+      store.achievements[key] = true;
+      showToast('🏆 Достижение: ' + ach.title);
+    }
+  });
+  saveStore(store);
+  renderAchievements();
+}
+
+function showToast(text){
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.textContent = text;
+  toastContainer.appendChild(t);
+  setTimeout(() => t.remove(), 3000);
+}
+
+/* ================= ЛОКАЛЬНЫЙ РЕКОРД ================= */
+function bestKeyFor(diff){
+  return 'neonMemoryBest_' + diff;
+}
+function getBest(diff){
+  const raw = localStorage.getItem(bestKeyFor(diff));
+  return raw ? JSON.parse(raw) : null;
+}
+function saveBestIfBetter(diff, score, moves, elapsed){
+  const prev = getBest(diff);
+  if(!prev || score > prev.score){
+    localStorage.setItem(bestKeyFor(diff), JSON.stringify({score, moves, elapsed}));
+    return true;
+  }
+  return false;
+}
+
+/* ================= FIREBASE (опционально) ================= */
+let fb = { enabled:false, db:null, collection:null };
+async function initFirebase(){
+  if(!firebaseConfig) return;
+  try{
+    const { initializeApp } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js');
+    const { getFirestore, collection, addDoc, getDocs, query, orderBy, limit } =
+      await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    fb = { enabled:true, db, collection, addDoc, getDocs, query, orderBy, limit };
+    console.log('Firebase подключён');
+  }catch(e){
+    console.warn('Firebase не подключён, играем локально', e);
+    fb.enabled = false;
+  }
+}
+
+async function submitScore(score, moves, elapsed, difficulty){
+  if(!fb.enabled) return;
+  try{
+    const { collection, addDoc } = fb;
+    await addDoc(collection(fb.db, 'leaderboard'), {
+      name: state.playerName || 'Игрок',
+      score, moves, elapsed, difficulty,
+      ts: Date.now()
+    });
+  }catch(e){ console.warn('Не удалось сохранить счёт', e); }
+}
+
+async function loadLeaderboard(){
+  if(!fb.enabled){
+    lbListEl.innerHTML = '<li class="lb-empty">Подключите Firebase, чтобы увидеть глобальный лидерборд. Сейчас играет локально.</li>';
+    return;
+  }
+  try{
+    const { collection, getDocs, query, orderBy, limit } = fb;
+    const q = query(collection(fb.db, 'leaderboard'), orderBy('score', 'desc'), limit(10));
+    const snap = await getDocs(q);
+    lbListEl.innerHTML = '';
+    if(snap.empty){
+      lbListEl.innerHTML = '<li class="lb-empty">Пока нет результатов — станьте первым!</li>';
+      return;
+    }
+    snap.forEach(doc => {
+      const d = doc.data();
+      const li = document.createElement('li');
+      li.innerHTML = `<span>${d.name} (${d.difficulty})</span><span>${d.score} очк. / ${d.moves} ходов</span>`;
+      lbListEl.appendChild(li);
+    });
+  }catch(e){
+    lbListEl.innerHTML = '<li class="lb-empty">Ошибка загрузки лидерборда.</li>';
+  }
+}
+
+/* ================= ИГРА ================= */
+function shuffle(arr){
+  for(let i=arr.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [arr[i],arr[j]]=[arr[j],arr[i]]; }
+  return arr;
+}
+
+function getIconSet(pairs){
+  return shuffle([...ICON_POOL]).slice(0, pairs);
+}
+
+function buildDeck(diffKey){
+  const cfg = DIFFICULTY[diffKey];
+  const icons = getIconSet(cfg.pairs);
+  const deck = [...icons, ...icons];
+  return shuffle(deck);
+}
+
+function renderBoard(deck, cfg){
+  boardEl.innerHTML = '';
+  boardEl.style.gridTemplateColumns = `repeat(${cfg.cols}, minmax(0, 1fr))`;
+  boardEl.style.maxWidth = Math.min(720, cfg.cols * 110) + 'px';
+  state.cards = [];
+  deck.forEach((icon) => {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.dataset.icon = icon;
+    const front = document.createElement('div');
+    front.className = 'face front';
+    front.textContent = icon;
+    const back = document.createElement('div');
+    back.className = 'face back';
+    card.appendChild(front);
+    card.appendChild(back);
+    card.addEventListener('click', () => onCardClick(card));
+    boardEl.appendChild(card);
+    state.cards.push(card);
+  });
+}
+
+function onCardClick(card){
+  if(state.lock || state.gameOver) return;
+  if(card.classList.contains('flipped') || card.classList.contains('matched')) return;
+  if(!state.startTime && state.timerOn) startTimer();
+
+  card.classList.add('flipped');
+  beep(520, 0.05, 'square', 0.08);
+  state.flipped.push(card);
+
+  if(state.flipped.length === 2){
+    state.moves++;
+    movesEl.textContent = state.moves;
+    checkMatch();
+  }
+}
+
+function checkMatch(){
+  const [a,b] = state.flipped;
+  if(a.dataset.icon === b.dataset.icon){
+    a.classList.add('matched');
+    b.classList.add('matched');
+    state.matched++;
+    state.score += 100;
+    scoreEl.textContent = state.score;
+    pairsEl.textContent = state.matched;
+    beep(880, 0.12, 'sine', 0.15);
+    state.flipped = [];
+
+    if(state.matched === DIFFICULTY[state.difficulty].pairs){
+      winGame();
+    }
+  } else {
+    state.lock = true;
+    beep(180, 0.15, 'sawtooth', 0.1);
+    setTimeout(() => {
+      a.classList.remove('flipped');
+      b.classList.remove('flipped');
+      state.flipped = [];
+      state.lock = false;
+    }, 900);
+  }
+}
+
+function winGame(){
+  state.gameOver = true;
+  stopTimer();
+  const cfg = DIFFICULTY[state.difficulty];
+  let bonus = cfg.bonus;
+  // бонус за скорость
+  if(state.timerOn && state.elapsed > 0 && state.elapsed < 90) bonus += 300;
+  state.score += bonus;
+  scoreEl.textContent = state.score;
+
+  // звание
+  let rank = 'Новичок';
+  if(state.score >= 2000) rank = 'Легенда';
+  else if(state.score >= 1200) rank = 'Мастер памяти';
+  else if(state.score >= 600) rank = 'Любитель';
+
+  messageEl.textContent = `ПОБЕДА! Звание: ${rank} • +${bonus} бонус • ${state.score} очков`;
+  beep(1046, 0.2, 'sine', 0.2);
+  setTimeout(() => beep(1318, 0.25, 'sine', 0.2), 120);
+
+  // локальный рекорд
+  const isNew = saveBestIfBetter(state.difficulty, state.score, state.moves, state.elapsed);
+  if(isNew) showToast('🎯 Новый рекорд сложности!');
+
+  // победы
+  const store = loadStore();
+  store.wins[state.difficulty] = (store.wins[state.difficulty] || 0) + 1;
+  saveStore(store);
+
+  checkAchievements();
+
+  // отправка в сеть
+  if(fb.enabled) submitScore(state.score, state.moves, state.elapsed, state.difficulty);
+}
+
+/* ================= ТАЙМЕР ================= */
+function startTimer(){
+  state.startTime = Date.now();
+  state.timerInterval = setInterval(() => {
+    state.elapsed = Math.floor((Date.now() - state.startTime)/1000);
+    timeEl.textContent = formatTime(state.elapsed);
+  }, 250);
+}
+function stopTimer(){
+  if(state.timerInterval) clearInterval(state.timerInterval);
+  state.timerInterval = null;
+}
+function formatTime(sec){
+  const m = Math.floor(sec/60);
+  const s = sec % 60;
+  return m + ':' + String(s).padStart(2,'0');
+}
+
+/* ================= СБРОС / СТАРТ ================= */
+function resetGame(){
+  stopTimer();
+  const diff = difficultySel.value;
+  state.difficulty = diff;
+  state.timerOn = timerModeSel.value === 'on';
+  state.soundOn = soundToggle.checked;
+  state.playerName = playerNameInput.value.trim() || 'Игрок';
+
+  const cfg = DIFFICULTY[diff];
+  state.cards = [];
+  state.flipped = [];
+  state.matched = 0;
+  state.moves = 0;
+  state.score = 0;
+  state.lock = false;
+  state.startTime = null;
+  state.elapsed = 0;
+  state.gameOver = false;
+
+  movesEl.textContent = '0';
+  pairsEl.textContent = '0';
+  totalPairsEl.textContent = cfg.pairs;
+  scoreEl.textContent = '0';
+  timeEl.textContent = '0:00';
+  messageEl.textContent = '';
+
+  const deck = buildDeck(diff);
+  renderBoard(deck, cfg);
+
+  // применить сетку
+  boardEl.style.gridTemplateColumns = `repeat(${cfg.cols}, minmax(0, 1fr))`;
+}
+
+/* ================= UI ================= */
+function bindUI(){
+  difficultySel.addEventListener('change', resetGame);
+  timerModeSel.addEventListener('change', resetGame);
+  playerNameInput.addEventListener('input', () => { state.playerName = playerNameInput.value.trim() || 'Игрок'; });
+  soundToggle.addEventListener('change', () => { state.soundOn = soundToggle.checked; });
+
+  $('restart').addEventListener('click', resetGame);
+  $('resetBest').addEventListener('click', () => {
+    localStorage.removeItem(bestKeyFor(difficultySel.value));
+    showToast('Рекорд сброшен');
+  });
+}
+
+/* ================= ИНИЦИАЛИЗАЦИЯ ================= */
+(async function init(){
+  bindUI();
+  renderAchievements();
+  await initFirebase();
+  await loadLeaderboard();
+  resetGame();
+})();
+</script>
+</body>
+</html>
